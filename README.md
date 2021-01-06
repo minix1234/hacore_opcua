@@ -17,7 +17,7 @@ If configuring encryption you will need to generate an application certification
 
 More than one opcua target can be specified.
 
-"""yaml
+```yaml
 opcua:
   - name: target1
     url: "opc.tcp://172.17.0.2:4840/"
@@ -25,14 +25,14 @@ opcua:
     session_timeout: 600000
     secure_timeout: 600000
     security_string: "Basic256Sha256,SignAndEncrypt,/ssl/certificate-example.der,/ssl/private-key-example.pem"
-"""
+```
 
 
 ## Sensors
 
 Sensors are configured by providing a "name", "hub" and "nodeid", "unit_of_measurement" are also supported.
 
-"""yaml
+```yaml
 sensor:
   platform: opcua
   nodes:
@@ -49,4 +49,14 @@ sensor:
     - name: Sensor3
       hub: target1
       nodeid: "ns=1;s=integer"
-"""
+```
+
+## Services
+
+The opcus domain will publish a "set_value" service which can be called by home assistant. The service data requires a "nodeid", "hub" and a "value" which can be a template value or more or less any opc type data.
+
+```yaml
+nodeid: ns=1;i=51028
+value: '{{states("sensor.sensor1")}}'
+hub: target1
+```

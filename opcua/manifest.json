@@ -1,0 +1,7 @@
+{
+    "domain": "opcua",
+    "name": "Opcua",
+    "documentation": "https://www.home-assistant.io/integrations/opcua",
+    "requirements": ["opcua==0.98.12"],
+    "codeowners": ["@minix1234"]
+  }

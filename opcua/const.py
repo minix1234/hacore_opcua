@@ -17,6 +17,8 @@ ATTR_HUB = "hub"
 ATTR_VALUE = "value"
 DEFAULT_TIMEOUT = 600000
 SERVICE_SET_VALUE = "set_value"
+SERVICE_CONNECT = "connect"
+SERVICE_CLOSE = "close"
 
 # sensor.py
 CONF_HUB = "hub"

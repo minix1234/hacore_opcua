@@ -27,6 +27,8 @@ from .const import (
     CONF_SECURITYSTRING,
     CONF_URI,
     SERVICE_SET_VALUE,
+    SERVICE_CONNECT,
+    SERVICE_CLOSE,
     ATTR_HUB,
     ATTR_NODEID,
     ATTR_VALUE,
@@ -75,6 +77,12 @@ SERVICE_SET_VALUE_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_CONNECT_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_HUB, default=DEFAULT_NAME): cv.string,
+    }
+)
+
 
 def setup(hass, config):
     hass.data[DOMAIN] = hub_collect = {}
@@ -99,19 +107,59 @@ def setup(hass, config):
 
         hub_collect[hub].setvalues(nodeid, value)
 
+    def connect(service):
+        """
+        should be a called service to reconnect in the event the
+        opcua target needs to restart and the socket drops.
+        self.connect()
+        """
+        hub = service.data[ATTR_HUB]
+
+        try:
+            hub_collect[hub].connect()
+        except Exception as e:
+            _LOGGER.error(e)
+
+    def close(service):
+        """
+        should be a called service to close the opcua connection gracefully.
+        """
+        hub = service.data[ATTR_HUB]
+
+        try:
+            hub_collect[hub].close()
+        except Exception as e:
+            _LOGGER.error(e)
+
     # do not wait for EVENT_HOMEASSISTANT_START, activate pymodbus now
     for client in hub_collect.values():
         client.setup()
 
-    # register function to gracefully stop modbus
+    # register function to gracefully stop opcua connections
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_opcua)
 
-    # Register services for modbus
+    # Register service to write back values to opcua nodeids
     hass.services.register(
         DOMAIN,
         SERVICE_SET_VALUE,
         set_value,
         schema=SERVICE_SET_VALUE_SCHEMA,
+    )
+
+    # Register services for opcua target reconnection
+    hass.services.register(
+        DOMAIN,
+        SERVICE_CONNECT,
+        connect,
+        schema=SERVICE_CONNECT_SCHEMA,
+    )
+
+    # Register services for opcua target reconnection
+    hass.services.register(
+        DOMAIN,
+        SERVICE_CLOSE,
+        close,
+        schema=SERVICE_CONNECT_SCHEMA,
     )
 
     return True

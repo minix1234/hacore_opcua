@@ -10,3 +10,17 @@ set_value:
     hub:
       description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
       example: "target1"
+
+connect:
+  description: execute the client.conect() method in the event the opcua server dropped your connection.
+  fields:
+    hub:
+      description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
+      example: "target1"
+
+close:
+  description: execute the client.close() method in the event you want/need to gracefully close the server/socket connection
+  fields:
+    hub:
+      description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
+      example: "target1"

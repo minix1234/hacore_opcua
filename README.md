@@ -60,3 +60,11 @@ nodeid: ns=1;i=51028
 value: '{{states("sensor.sensor1")}}'
 hub: target1
 ```
+
+The opcua domain will also publish a "connect" and "close" service.  These can be used to reconnect an opcua session in the event it is closed by the opcua server. or to prematurely close a connection to a server.
+
+Only the target "hub" is required to be specified.
+
+```yaml
+hub: target1
+```

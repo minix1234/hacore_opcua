@@ -50,7 +50,17 @@ sensor:
       hub: target1
       nodeid: "ns=1;s=integer"
 ```
+The default sensor refresh rate is 30 seconds. If you wish to change that add a `scan_interval` definition into your sensor yaml configuration.
 
+```yaml
+- platform: opcua
+  scan_interval: 10
+  nodes:
+    - name: Sensor1
+      hub: WAGO_OPC_UA
+      nodeid: "ns=4;s=|var|WAGO 750-8101 PFC100 2ETH.Application.Publish_NativeMQTT.dwMyCounter"
+      unit_of_measurement: degrees
+```
 ## Services
 
 The opcus domain will publish a "set_value" service which can be called by home assistant. The service data requires a "nodeid", "hub" and a "value" which can be a template value or more or less any opc type data.

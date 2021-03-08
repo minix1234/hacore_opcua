@@ -212,9 +212,15 @@ class OpcUAHub:
         if self._config_password is not None:
             self._client._password = self._config_password
 
-        # Connect device
-        self.connect()
+        # Attempt Device Connection
+        # Wrapped in "try" due to socket critical error when OPCUA server rejects/tears down 
+        # the socket https://github.com/minix1234/hacore_opcua/issues/1
+        try:
+            self.connect()
 
+        except Exception as e:
+            _LOGGER.error(e)
+    
     def close(self):
         """Disconnect client."""
         self._client.disconnect()

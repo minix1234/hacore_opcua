@@ -3,5 +3,6 @@
     "name": "Opcua",
     "documentation": "https://www.home-assistant.io/integrations/opcua",
     "requirements": ["opcua==0.98.12"],
-    "codeowners": ["@minix1234"]
+    "codeowners": ["@minix1234"],
+    "version": "0.1.0"
   }

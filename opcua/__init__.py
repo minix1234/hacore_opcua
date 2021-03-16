@@ -13,6 +13,7 @@ from homeassistant.const import (
     CONF_USERNAME,
     CONF_PASSWORD,
     EVENT_HOMEASSISTANT_STOP,
+    EVENT_HOMEASSISTANT_START,
 )
 
 import homeassistant.helpers.config_validation as cv
@@ -27,6 +28,7 @@ from .const import (
     CONF_SECURITYSTRING,
     CONF_URI,
     SERVICE_SET_VALUE,
+    SERVICE_READ_VALUE,
     SERVICE_CONNECT,
     SERVICE_CLOSE,
     ATTR_HUB,
@@ -77,6 +79,13 @@ SERVICE_SET_VALUE_SCHEMA = vol.Schema(
     }
 )
 
+SERVICE_READ_VALUE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_HUB, default=DEFAULT_NAME): cv.string,
+        vol.Required(ATTR_NODEID): cv.string,
+    }
+)
+
 SERVICE_CONNECT_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_HUB, default=DEFAULT_NAME): cv.string,
@@ -97,7 +106,13 @@ def setup(hass, config):
         """Stop opcua service."""
         for client in hub_collect.values():
             client.close()
+    
+    def start_opcua(event):
+        """Start opcua service."""
+        for client in hub_collect.values():
+            client.connect()
 
+            
     def set_value(service):
         """set opcua nodeid values."""
 
@@ -106,6 +121,15 @@ def setup(hass, config):
         nodeid = service.data[ATTR_NODEID]
 
         hub_collect[hub].setvalues(nodeid, value)
+    
+    def read_value(service):
+        """read opcua nodeid values."""
+
+        hub = service.data[ATTR_HUB]
+        nodeid = service.data[ATTR_NODEID]
+
+        #Trying to determine if we can even access this data gathered
+        return hub_collect[hub].readvalues(nodeid)
 
     def connect(service):
         """
@@ -115,10 +139,8 @@ def setup(hass, config):
         """
         hub = service.data[ATTR_HUB]
 
-        try:
-            hub_collect[hub].connect()
-        except Exception as e:
-            _LOGGER.error(e)
+        hub_collect[hub].connect()
+        
 
     def close(service):
         """
@@ -126,17 +148,18 @@ def setup(hass, config):
         """
         hub = service.data[ATTR_HUB]
 
-        try:
-            hub_collect[hub].close()
-        except Exception as e:
-            _LOGGER.error(e)
+        hub_collect[hub].close()
 
-    # do not wait for EVENT_HOMEASSISTANT_START, activate pymodbus now
+
+    # do not wait for EVENT_HOMEASSISTANT_START, setup opcua connection properties now
     for client in hub_collect.values():
         client.setup()
 
     # register function to gracefully stop opcua connections
     hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_opcua)
+
+    # register function to start opcua connections on HA statup
+    hass.bus.async_listen_once(EVENT_HOMEASSISTANT_START, start_opcua)
 
     # Register service to write back values to opcua nodeids
     hass.services.register(
@@ -144,6 +167,14 @@ def setup(hass, config):
         SERVICE_SET_VALUE,
         set_value,
         schema=SERVICE_SET_VALUE_SCHEMA,
+    )
+
+    # Register service to read opcua nodeids values on the fly
+    hass.services.register(
+        DOMAIN,
+        SERVICE_READ_VALUE,
+        read_value,
+        schema=SERVICE_READ_VALUE_SCHEMA,
     )
 
     # Register services for opcua target reconnection
@@ -154,7 +185,7 @@ def setup(hass, config):
         schema=SERVICE_CONNECT_SCHEMA,
     )
 
-    # Register services for opcua target reconnection
+    # Register services for opcua connection closing
     hass.services.register(
         DOMAIN,
         SERVICE_CLOSE,
@@ -191,6 +222,7 @@ class OpcUAHub:
 
     def setup(self):
         """Set up opcua client."""
+        _LOGGER.info('Setting up Client parameters for: '+self._config_name)
         self._client = Client(self._config_url)
 
         # Setup timeouts
@@ -215,23 +247,32 @@ class OpcUAHub:
         # Attempt Device Connection
         # Wrapped in "try" due to socket critical error when OPCUA server rejects/tears down 
         # the socket https://github.com/minix1234/hacore_opcua/issues/1
-        try:
-            self.connect()
+        # Moved initial connection attemp to start_opcua
+        #try:
+        #    self.connect()
 
-        except Exception as e:
-            _LOGGER.error(e)
+        #except Exception as e:
+        #    _LOGGER.error(e)
     
     def close(self):
         """Disconnect client."""
-        self._client.disconnect()
+        try:
+            self._client.disconnect()
+        except Exception as e:
+            _LOGGER.error(self._config_name +': Channel Close Error: '+ str(e))
 
     def connect(self):
         """Connect client."""
-        self._client.connect()
+        try:
+            self._client.connect()
+        except Exception as e:
+            _LOGGER.error(self._config_name +': Connection Error: '+ str(e))
 
     def readvalues(self, nodeid):
-
-        return self._client.get_node(nodeid).get_value()
+        try:
+            return self._client.get_node(nodeid).get_value()
+        except Exception as e:
+            _LOGGER.error(str(nodeid) +', Read Value Error: '+ str(e))
 
     def setvalues(self, nodeid, value):
 
@@ -241,4 +282,4 @@ class OpcUAHub:
             node.set_value(value, uatype)
 
         except Exception as e:
-            _LOGGER.error(e)
+            _LOGGER.error('Error: ' + str(e) + '  encountered when attempting to write a value of: '+str(value) +' to nodeid: '+ str(nodeid))

@@ -1,5 +1,5 @@
 set_value:
-  description: Write to a opcua node.
+  description: Write to an opcua node.
   fields:
     nodeid:
       description: the opcua nodeid to write to.
@@ -8,19 +8,29 @@ set_value:
       description: Value (single value) to write. Can be int, float, bool, string, byte
       example: "0"
     hub:
-      description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
+      description: Optional opcua hub name. A hub with the name 'default' is used if not specified.
+      example: "target1"
+
+read_value:
+  description: read an opcua node.
+  fields:
+    nodeid:
+      description: the opcua nodeid to read from.
+      example: "'ns=1;i=51010'"
+    hub:
+      description: Optional opcua hub name. A hub with the name 'default' is used if not specified.
       example: "target1"
 
 connect:
   description: execute the client.conect() method in the event the opcua server dropped your connection.
   fields:
     hub:
-      description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
+      description: Optional opcua hub name. A hub with the name 'default' is used if not specified.
       example: "target1"
 
 close:
   description: execute the client.close() method in the event you want/need to gracefully close the server/socket connection
   fields:
     hub:
-      description: Optional Modbus hub name. A hub with the name 'default' is used if not specified.
+      description: Optional opcua hub name. A hub with the name 'default' is used if not specified.
       example: "target1"

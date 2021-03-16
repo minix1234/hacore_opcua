@@ -75,7 +75,6 @@ The opcus domain will publish a "read_value" service which can be called by home
 
 ```yaml
 nodeid: ns=1;i=51028
-value: '{{states("sensor.sensor1")}}'
 hub: target1
 ```
 

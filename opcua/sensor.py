@@ -87,7 +87,7 @@ class OpcuaNodeidSensor(RestoreEntity):
         self._device_class = device_class
         self._value = None
         self._available = True
-        self._unique_id = str(OPCUA_DOMAIN) + "-" + str(self._hub) + "-" + str(self._name)
+        self._unique_id = str(OPCUA_DOMAIN) + "-" + str(self._name) #"-" + str(self._hub) +
 
     async def async_added_to_hass(self):
         """Handle entity which will be added."""

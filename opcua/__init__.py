@@ -3,7 +3,8 @@
 import logging
 import voluptuous as vol
 
-from opcua import Client
+from opcua import Client, ua
+
 
 from homeassistant.const import (
     ATTR_STATE,
@@ -28,6 +29,7 @@ from .const import (
     CONF_SECURITYSTRING,
     CONF_URI,
     SERVICE_SET_VALUE,
+    SERVICE_SET_ATTRIBUTE,
     SERVICE_READ_VALUE,
     SERVICE_CONNECT,
     SERVICE_CLOSE,
@@ -65,6 +67,22 @@ CONFIG_SCHEMA = vol.Schema(
 )
 
 SERVICE_SET_VALUE_SCHEMA = vol.Schema(
+    {
+        vol.Optional(ATTR_HUB, default=DEFAULT_NAME): cv.string,
+        vol.Required(ATTR_NODEID): cv.string,
+        vol.Required(ATTR_VALUE): vol.Any(
+            float,
+            int,
+            str,
+            cv.byte,
+            cv.boolean,
+            cv.time,
+        ),
+    }
+)
+
+
+SERVICE_SET_ATTRIBUTE_SCHEMA = vol.Schema(
     {
         vol.Optional(ATTR_HUB, default=DEFAULT_NAME): cv.string,
         vol.Required(ATTR_NODEID): cv.string,
@@ -122,6 +140,15 @@ def setup(hass, config):
 
         hub_collect[hub].setvalues(nodeid, value)
     
+    def set_attribute(service):
+        """set opcua nodeid values."""
+
+        hub = service.data[ATTR_HUB]
+        value = service.data[ATTR_VALUE]
+        nodeid = service.data[ATTR_NODEID]
+
+        hub_collect[hub].setvalues(nodeid, value)
+    
     def read_value(service):
         """read opcua nodeid values."""
 
@@ -168,6 +195,15 @@ def setup(hass, config):
         set_value,
         schema=SERVICE_SET_VALUE_SCHEMA,
     )
+
+    # Register service to write back values to opcua nodeids via set attributes
+    hass.services.register(
+        DOMAIN,
+        SERVICE_SET_ATTRIBUTE,
+        set_attribute,
+        schema=SERVICE_SET_ATTRIBUTE_SCHEMA,
+    )
+
 
     # Register service to read opcua nodeids values on the fly
     hass.services.register(
@@ -283,3 +319,13 @@ class OpcUAHub:
 
         except Exception as e:
             _LOGGER.error('Error: ' + str(e) + '  encountered when attempting to write a value of: '+str(value) +' to nodeid: '+ str(nodeid))
+
+
+    def setattribute(self, nodeid, value):
+
+        try:
+            node = self._client.get_node(nodeid)
+            node.set_attribute(ua.AttributeIds.Value, ua.DataValue(value))
+
+        except Exception as e:
+            _LOGGER.error('Error: ' + str(e) + '  encountered when attempting to write an attribute.ValueIds.Value of: '+str(value) +' to nodeid: '+ str(nodeid))

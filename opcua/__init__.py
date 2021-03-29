@@ -147,7 +147,7 @@ def setup(hass, config):
         value = service.data[ATTR_VALUE]
         nodeid = service.data[ATTR_NODEID]
 
-        hub_collect[hub].setvalues(nodeid, value)
+        hub_collect[hub].setattribute(nodeid, value)
     
     def read_value(service):
         """read opcua nodeid values."""

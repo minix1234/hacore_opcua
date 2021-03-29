@@ -325,7 +325,9 @@ class OpcUAHub:
 
         try:
             node = self._client.get_node(nodeid)
-            node.set_attribute(ua.AttributeIds.Value, ua.DataValue(value))
+            uatype = node.get_data_value().Value.VariantType
+            datavalue = ua.DataValue(ua.Variant(value, uatype))
+            node.set_attribute(ua.AttributeIds.Value, datavalue)
 
         except Exception as e:
             _LOGGER.error('Error: ' + str(e) + '  encountered when attempting to write an attribute.ValueIds.Value of: '+str(value) +' to nodeid: '+ str(nodeid))
